@@ -1,0 +1,8 @@
+psycopg[binary]
+python-dotenv
+requests
+pandas
+streamlit
+plotly
+statsmodels
+numpy
