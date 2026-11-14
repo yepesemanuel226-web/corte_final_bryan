@@ -151,57 +151,300 @@ Secciones de la app:
 
 ### Aplicación Streamlit
 
-**1. Resumen General** – KPIs principales y filtros laterales por departamento y año.
+---
+
+#### 1. Resumen General
 
 ![Resumen General](screenshots/01_resumen_general.png)
 
-**2. Calidad de Datos** – Tabla de valores nulos y estadísticas descriptivas por departamento.
+Muestra los KPIs principales del dataset filtrado: total de registros, temperatura media, máxima y mínima, número de departamentos, estaciones, municipios y el rango temporal. Los filtros laterales por departamento y año controlan todo el análisis de forma dinámica.
+
+```python
+st.header("1. Resumen General")
+
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Total registros",    f"{len(df_f):,}")
+col2.metric("Temperatura media",  f"{df_f['valorobservado'].mean():.2f} °C")
+col3.metric("Temperatura máxima", f"{df_f['valorobservado'].max():.2f} °C")
+col4.metric("Temperatura mínima", f"{df_f['valorobservado'].min():.2f} °C")
+
+col5, col6, col7, col8 = st.columns(4)
+col5.metric("Departamentos", f"{df_f['departamento'].nunique()}")
+col6.metric("Estaciones",    f"{df_f['codigoestacion'].nunique()}")
+col7.metric("Municipios",    f"{df_f['municipio'].nunique()}")
+col8.metric("Rango temporal",
+            f"{df_f['fechaobservacion'].min().year} – {df_f['fechaobservacion'].max().year}")
+```
+
+---
+
+#### 2. Calidad de Datos
 
 ![Calidad de Datos](screenshots/02_calidad_datos.png)
 
-**3. Distribución de Temperaturas** – Histograma superpuesto y boxplot por departamento.
+Presenta dos tablas lado a lado: la primera muestra el conteo de valores nulos por columna con su porcentaje sobre el total, y la segunda muestra las estadísticas descriptivas (count, mean, std, min, percentiles, max) agrupadas por departamento.
+
+```python
+st.header("2. Calidad de Datos")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("Valores faltantes")
+    nulos = df_f.isnull().sum().reset_index()
+    nulos.columns = ["Columna", "Valores nulos"]
+    nulos["% del total"] = (nulos["Valores nulos"] / len(df_f) * 100).round(2)
+    st.dataframe(nulos, use_container_width=True)
+
+with col2:
+    st.subheader("Estadísticas descriptivas – Temperatura (°C)")
+    desc = df_f.groupby("departamento")["valorobservado"].describe().round(2)
+    st.dataframe(desc, use_container_width=True)
+```
+
+---
+
+#### 3. Distribución de Temperaturas
 
 ![Distribución de Temperaturas](screenshots/03_distribucion_temperaturas.png)
 
-**4. Valores Atípicos** – Detección por método IQR con métricas y gráfico de barras.
+Histograma superpuesto con 60 bins por departamento (izquierda) y diagrama de caja (derecha). Permite comparar visualmente la forma de la distribución y la dispersión de temperaturas entre los 7 departamentos del Caribe.
+
+```python
+st.header("3. Distribución de Temperaturas")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    fig_hist = px.histogram(
+        df_f, x="valorobservado", color="departamento",
+        nbins=60, barmode="overlay", opacity=0.7,
+        labels={"valorobservado": "Temperatura (°C)", "count": "Frecuencia"},
+        title="Distribución de temperatura por departamento",
+    )
+    st.plotly_chart(fig_hist, use_container_width=True)
+
+with col2:
+    fig_box = px.box(
+        df_f, x="departamento", y="valorobservado", color="departamento",
+        labels={"valorobservado": "Temperatura (°C)", "departamento": "Departamento"},
+        title="Boxplot de temperatura por departamento",
+    )
+    fig_box.update_layout(showlegend=False, xaxis_tickangle=-30)
+    st.plotly_chart(fig_box, use_container_width=True)
+```
+
+---
+
+#### 4. Valores Atípicos
 
 ![Valores Atípicos](screenshots/04_valores_atipicos.png)
 
-**5. Tendencia Temporal** – Evolución mensual 2005–2019 y patrón diario por hora.
+Detecta outliers usando el método IQR (rango intercuartílico). Calcula los límites inferior y superior como Q1 − 1.5×IQR y Q3 + 1.5×IQR, muestra las métricas clave a la izquierda y un gráfico de barras con el conteo de atípicos por departamento a la derecha.
+
+```python
+st.header("4. Valores Atípicos")
+
+Q1  = df_f["valorobservado"].quantile(0.25)
+Q3  = df_f["valorobservado"].quantile(0.75)
+IQR = Q3 - Q1
+lim_inf  = Q1 - 1.5 * IQR
+lim_sup  = Q3 + 1.5 * IQR
+atipicos = df_f[(df_f["valorobservado"] < lim_inf) | (df_f["valorobservado"] > lim_sup)]
+
+col1, col2 = st.columns([1, 2])
+with col1:
+    st.metric("Total valores atípicos", f"{len(atipicos):,}")
+    st.metric("% del dataset", f"{len(atipicos)/len(df_f)*100:.2f}%")
+    st.metric("Límite inferior (IQR)", f"{lim_inf:.2f} °C")
+    st.metric("Límite superior (IQR)", f"{lim_sup:.2f} °C")
+
+with col2:
+    atip_depto = atipicos.groupby("departamento").size().reset_index(name="Atípicos")
+    fig_atip = px.bar(
+        atip_depto, x="departamento", y="Atípicos", color="departamento",
+        title="Valores atípicos por departamento",
+    )
+    st.plotly_chart(fig_atip, use_container_width=True)
+```
+
+---
+
+#### 5. Tendencia Temporal
 
 ![Tendencia Temporal](screenshots/05_tendencia_temporal.png)
 
-**6. Mapa de Calor de Correlaciones** – Correlación entre variables numéricas del dataset.
+Dos gráficos de línea: el de la izquierda muestra la temperatura media mensual por departamento a lo largo de todo el período 2005–2019, y el de la derecha muestra el patrón promedio a lo largo de las horas del día, revelando el ciclo térmico diario de cada departamento.
+
+```python
+st.header("5. Tendencia Temporal")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    temp_mensual = (
+        df_f.groupby(["anio", "mes", "departamento"])["valorobservado"]
+        .mean().reset_index()
+    )
+    temp_mensual["fecha"] = pd.to_datetime(
+        temp_mensual["anio"].astype(str) + "-" +
+        temp_mensual["mes"].astype(str).str.zfill(2) + "-01"
+    )
+    fig_line = px.line(
+        temp_mensual, x="fecha", y="valorobservado", color="departamento",
+        labels={"valorobservado": "Temp. media (°C)", "fecha": "Fecha"},
+        title="Evolución mensual de temperatura",
+    )
+    st.plotly_chart(fig_line, use_container_width=True)
+
+with col2:
+    temp_hora = (
+        df_f.groupby(["hora", "departamento"])["valorobservado"]
+        .mean().reset_index()
+    )
+    fig_hora = px.line(
+        temp_hora, x="hora", y="valorobservado", color="departamento",
+        labels={"valorobservado": "Temp. media (°C)", "hora": "Hora del día"},
+        title="Patrón diario de temperatura",
+        markers=True,
+    )
+    fig_hora.update_xaxes(dtick=2)
+    st.plotly_chart(fig_hora, use_container_width=True)
+```
+
+---
+
+#### 6. Mapa de Calor de Correlaciones
 
 ![Mapa de Calor de Correlaciones](screenshots/06_mapa_calor_correlaciones.png)
 
-**7. Mapa de Estaciones** – Ubicación geográfica de las 59 estaciones con temperatura media.
+Heatmap con los coeficientes de correlación de Pearson entre las variables numéricas del dataset: temperatura observada, latitud, longitud, año, mes y hora. Usa escala de color RdBu centrada en 0 para distinguir correlaciones positivas (azul) de negativas (rojo).
+
+```python
+st.header("6. Mapa de Calor de Correlaciones")
+
+cols_num = ["valorobservado", "latitud", "longitud", "anio", "mes", "hora"]
+corr = df_f[cols_num].corr().round(2)
+
+fig_corr = go.Figure(data=go.Heatmap(
+    z=corr.values,
+    x=corr.columns.tolist(),
+    y=corr.index.tolist(),
+    colorscale="RdBu", zmid=0,
+    text=corr.values, texttemplate="%{text}",
+))
+fig_corr.update_layout(title="Correlación entre variables numéricas", height=450)
+st.plotly_chart(fig_corr, use_container_width=True)
+```
+
+---
+
+#### 7. Mapa de Estaciones
 
 ![Mapa de Estaciones](screenshots/07_mapa_estaciones.png)
 
-**8. Gráficos de Dispersión** – Temperatura vs hora del día y temperatura vs latitud con tendencia OLS.
+Mapa interactivo con la ubicación geográfica de las 59 estaciones meteorológicas. Cada punto está coloreado y dimensionado según la temperatura media registrada. Al pasar el cursor sobre una estación se muestra su nombre, departamento, municipio y temperatura media.
+
+```python
+st.header("7. Mapa de Estaciones")
+
+estaciones = (
+    df_f.groupby(["codigoestacion", "nombreestacion", "departamento",
+                  "municipio", "latitud", "longitud"])["valorobservado"]
+    .mean().reset_index()
+    .rename(columns={"valorobservado": "temp_media"})
+    .dropna(subset=["latitud", "longitud"])
+)
+
+fig_mapa = px.scatter_map(
+    estaciones, lat="latitud", lon="longitud",
+    color="temp_media", size="temp_media",
+    hover_name="nombreestacion",
+    hover_data={"departamento": True, "municipio": True, "temp_media": ":.2f",
+                "latitud": False, "longitud": False},
+    color_continuous_scale="YlOrRd",
+    map_style="carto-positron",
+    zoom=5, center={"lat": 9.5, "lon": -74.5},
+    title="Temperatura media por estación meteorológica",
+)
+st.plotly_chart(fig_mapa, use_container_width=True)
+```
+
+---
+
+#### 8. Gráficos de Dispersión
 
 ![Gráficos de Dispersión](screenshots/08_graficos_dispersion.png)
 
-**9. Muestra de Datos** – Tabla interactiva con los primeros 500 registros filtrados.
+Dos scatter plots sobre una muestra aleatoria de 5,000 registros. El de la izquierda analiza la relación entre la hora del día y la temperatura. El de la derecha analiza la relación entre latitud y temperatura, incluyendo una línea de tendencia OLS por departamento calculada con `statsmodels`.
+
+```python
+st.header("8. Gráficos de Dispersión")
+
+muestra = df_f.sample(min(5000, len(df_f)), random_state=42)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    fig_sc1 = px.scatter(
+        muestra, x="hora", y="valorobservado", color="departamento", opacity=0.5,
+        labels={"hora": "Hora del día", "valorobservado": "Temperatura (°C)"},
+        title="Relación entre hora del día y temperatura",
+    )
+    fig_sc1.update_traces(marker=dict(size=4))
+    st.plotly_chart(fig_sc1, use_container_width=True)
+
+with col2:
+    fig_sc2 = px.scatter(
+        muestra, x="latitud", y="valorobservado", color="departamento",
+        opacity=0.5, trendline="ols",
+        labels={"latitud": "Latitud", "valorobservado": "Temperatura (°C)"},
+        title="Relación entre latitud y temperatura",
+    )
+    fig_sc2.update_traces(marker=dict(size=4), selector=dict(mode="markers"))
+    st.plotly_chart(fig_sc2, use_container_width=True)
+```
+
+---
+
+#### 9. Muestra de Datos
 
 ![Muestra de Datos](screenshots/09_muestra_datos.png)
+
+Tabla interactiva con los primeros 500 registros del dataset filtrado. Permite inspeccionar directamente los datos crudos con todas las columnas: código de estación, fecha, temperatura, departamento, municipio, zona hidrográfica y coordenadas.
+
+```python
+st.header("9. Muestra de Datos")
+st.dataframe(df_f.head(500), use_container_width=True)
+```
 
 ---
 
 ### Power BI
 
-**Dashboard principal** – KPIs, temperatura media por departamento, evolución anual y patrón horario.
+---
+
+#### Dashboard principal
 
 ![Power BI Dashboard](screenshots/10_powerbi_dashboard.png)
 
-**Modelo de datos** – Vista de la tabla `public temperatura_aire_limpia` con todos sus campos y la medida `Total Registros`.
+Dashboard conectado directamente a la vista `temperatura_aire_limpia` en Neon. Incluye KPIs de temperatura mínima, media y máxima, un gráfico de barras con la temperatura media por departamento, la evolución anual 2005–2019, el patrón horario diario por departamento y la temperatura media por mes del año.
+
+---
+
+#### Modelo de datos
 
 ![Power BI Modelo de Datos](screenshots/12_powerbi_modelo.png)
 
-**Datos cargados** – Vista de los registros en Power BI conectados directamente a la vista de Neon.
+Vista del modelo de datos en Power BI mostrando la tabla `public temperatura_aire_limpia` con todos sus campos: estación, sensor, fecha, temperatura, departamento, municipio, zona hidrográfica, coordenadas y la medida calculada `Total Registros`.
+
+---
+
+#### Datos cargados
 
 ![Power BI Tabla de Datos](screenshots/11_powerbi_tabla_datos.png)
+
+Vista de los registros en Power BI conectados en tiempo real a la vista de Neon, con todos los campos visibles por fila: código de estación, sensor, fecha de observación, temperatura observada, nombre de estación, departamento, municipio, zona hidrográfica y coordenadas.
 
 ---
 
