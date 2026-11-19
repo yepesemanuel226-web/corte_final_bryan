@@ -438,6 +438,54 @@ Registros conectados en tiempo real desde Neon con todos los campos visibles.
 
 ---
 
+## 🛠️ Evidencias técnicas
+
+### Código fuente — app.py
+
+![Código fuente](screenshots/14_codigo_fuente.png)
+
+Estructura del proyecto en VS Code con `app.py` abierto, mostrando los imports, configuración de página y las primeras secciones del EDA. Se observa la carpeta `utils/` con `conexion.py` y todos los archivos del proyecto.
+
+### Terminal — Streamlit corriendo
+
+![Terminal Streamlit](screenshots/15_terminal_corriendo.png)
+
+Ejecución de la aplicación desde PowerShell con el entorno virtual activo. Streamlit levanta el servidor en `http://localhost:8501`.
+
+---
+
+### PostgreSQL Neon — Panel de conexión
+
+![Neon Conexión](screenshots/17_neon_conexion.png)
+
+Panel de conexión al branch `parcial` del proyecto en Neon. Muestra la base de datos `neondb`, el rol `neondb_owner` y la cadena de conexión con credenciales enmascaradas.
+
+### PostgreSQL Neon — Tabla temperatura_aire (datos)
+
+![Neon Tabla Datos](screenshots/16_neon_tabla_datos.png)
+
+Vista de los registros cargados en la tabla `temperatura_aire`. Se observan las columnas `id`, `codigoestacion`, `codigosensor`, `fechaobservacion`, `valorobservado` y `nombreestacion` con sus tipos de datos.
+
+### PostgreSQL Neon — Vista temperatura_aire_limpia (datos)
+
+![Neon Vista Datos](screenshots/20_neon_vista_datos.png)
+
+Vista de los registros de `temperatura_aire_limpia`, que filtra los errores de sensor manteniendo la tabla original intacta.
+
+### PostgreSQL Neon — Definición de la vista SQL
+
+![Neon Vista SQL](screenshots/18_neon_vista_sql.png)
+
+Definición completa de la vista `temperatura_aire_limpia` en Neon, con los criterios de depuración: `valorobservado > 1`, `<= 50`, `latitud IS NOT NULL` y `longitud IS NOT NULL`.
+
+### PostgreSQL Neon — SQL Editor
+
+![Neon SQL Editor](screenshots/19_neon_sql_editor.png)
+
+Consulta `SELECT COUNT(*) FROM temperatura_aire` ejecutada en el SQL Editor de Neon, confirmando los **350,000 registros** cargados en la tabla original.
+
+---
+
 ## 📝 Notas sobre los datos
 
 - Los datos provienen de estaciones automáticas del IDEAM con control de calidad básico.
