@@ -30,21 +30,7 @@ Análisis exploratorio de datos sobre registros de temperatura del aire en los 7
 ```
 corte_final/
 │
-├── app.py                          # Página de inicio y navegación
-├── pages/                          # Secciones de la app (Streamlit multipágina)
-│   ├── 00_Transformaciones.py      # Datos originales vs depurados + tabla de transformaciones
-│   ├── 01_Resumen_General.py       # KPIs principales
-│   ├── 02_Calidad_de_Datos.py      # Valores faltantes y estadísticas descriptivas
-│   ├── 03_Distribucion.py          # Histograma y boxplot por departamento
-│   ├── 04_Valores_Atipicos.py      # Detección de outliers por método IQR
-│   ├── 05_Tendencia_Temporal.py    # Evolución mensual y patrón horario diario
-│   ├── 06_Correlaciones.py         # Mapa de calor de correlaciones
-│   ├── 07_Mapa_Estaciones.py       # Mapa geográfico de estaciones meteorológicas
-│   ├── 08_Dispersion.py            # Temperatura vs hora y vs latitud (OLS)
-│   ├── 09_Analisis_Departamental.py# Temperatura media y registros por departamento
-│   ├── 10_Analisis_Municipal.py    # Ranking de municipios con slider interactivo
-│   ├── 11_Conclusiones.py          # Hallazgos dinámicos y conclusiones metodológicas
-│   └── 12_Muestra_de_Datos.py      # Tabla interactiva con descarga CSV
+├── app.py                          # Aplicación Streamlit (EDA completo en una sola página)
 ├── utils/                          # Módulos compartidos
 │   └── conexion.py                 # Carga de datos desde Neon y filtros del sidebar
 ├── screenshots/                    # Capturas de pantalla de la app y Power BI
@@ -433,7 +419,95 @@ Registros conectados en tiempo real desde Neon, con todos los campos visibles po
 
 ---
 
-## Notas sobre los datos
+## Hallazgos del análisis
+
+Esta sección resume los resultados obtenidos del análisis exploratorio sobre los 332,063 registros depurados de temperatura del aire en la Región Caribe colombiana (2005–2019). Puede usarse como referencia para el documento de investigación.
+
+---
+
+### Estadísticas generales
+
+| Indicador | Valor |
+|---|---|
+| Temperatura media regional | 26.63 °C |
+| Temperatura máxima registrada | 50.00 °C |
+| Temperatura mínima registrada | 1.10 °C |
+| Período analizado | 2005 – 2019 |
+| Departamentos cubiertos | 7 |
+| Estaciones meteorológicas | 59 |
+| Municipios con registros | 43 |
+
+---
+
+### Comportamiento por departamento
+
+| Departamento | Temp. media (°C) | Temp. mín (°C) | Temp. máx (°C) | Registros |
+|---|---|---|---|---|
+| ATLÁNTICO | 27.86 | 1.2 | 46.0 | 49,207 |
+| BOLÍVAR | 27.94 | 16.3 | 48.6 | 49,775 |
+| CESAR | 24.00 | 1.8 | 49.2 | 49,553 |
+| CÓRDOBA | 27.87 | 1.3 | 50.0 | 34,781 |
+| LA GUAJIRA | 27.76 | 1.1 | 50.0 | 49,568 |
+| MAGDALENA | 25.50 | 1.2 | 41.4 | 49,535 |
+| SUCRE | 25.82 | 1.2 | 49.8 | 48,221 |
+
+> Bolívar y Atlántico presentan las temperaturas medias más altas de la región. Cesar y Magdalena registran las medias más bajas, asociadas a la presencia de estaciones en zonas de mayor altitud.
+
+---
+
+### Patrón horario diario
+
+La temperatura sigue un ciclo térmico diario consistente en todos los departamentos:
+
+- **Mínimo diario:** entre las 05:00 y 06:00 h (temperaturas cercanas a 21–24 °C según el departamento)
+- **Máximo diario:** entre las 13:00 y 15:00 h (temperaturas cercanas a 30–34 °C)
+- **Amplitud térmica diaria promedio:** aproximadamente 8–10 °C
+
+Este patrón es característico del clima tropical de la región Caribe colombiana.
+
+---
+
+### Variación estacional
+
+- El análisis mensual no muestra una estacionalidad marcada en temperatura media, lo que es consistente con el clima tropical de la región.
+- Se observan caídas abruptas en la serie temporal (especialmente en Cesar y Córdoba entre 2010 y 2015) que corresponden a errores de sensor, conservados en la tabla original y excluidos por la vista de depuración.
+- El período con mayor densidad de registros es **2013–2018**.
+
+---
+
+### Valores atípicos
+
+- Se identificaron **16,175 valores atípicos** (4.89% del dataset depurado) mediante el método IQR.
+- Límite inferior: **16.70 °C** · Límite superior: **37.50 °C**
+- **Córdoba** concentra la mayor cantidad de atípicos (~7,000), seguido de Sucre (~4,800).
+- Los atípicos en Córdoba se asocian a fallas técnicas en sensores de varias estaciones entre 2010 y 2015.
+
+---
+
+### Correlaciones entre variables
+
+| Par de variables | Correlación |
+|---|---|
+| Temperatura – Hora del día | 0.17 (positiva débil) |
+| Temperatura – Latitud | 0.01 (sin correlación significativa) |
+| Temperatura – Longitud | -0.06 (sin correlación significativa) |
+| Temperatura – Año | -0.07 (sin tendencia temporal marcada) |
+| Temperatura – Mes | -0.02 (sin estacionalidad marcada) |
+| Latitud – Longitud | 0.72 (correlación geográfica esperada) |
+
+> La correlación más relevante para el análisis es la de temperatura con hora del día (0.17), que confirma el ciclo térmico diario. La ausencia de correlación con latitud sugiere que dentro de la región Caribe la variación espacial de temperatura es menor que la variación temporal diaria.
+
+---
+
+### Calidad de los datos
+
+- El dataset original contiene **350,000 registros** sin valores nulos en las columnas principales.
+- Se depuraron **17,937 registros** (5.1%) por errores de sensor: valores ≤ 1 °C, > 50 °C o sin coordenadas geográficas.
+- Los datos originales se conservan intactos en la tabla `temperatura_aire`; la depuración se aplica exclusivamente a través de la vista `temperatura_aire_limpia`.
+
+---
+
+
 
 - Los datos provienen de estaciones automáticas del IDEAM con control de calidad básico.
 - Se identificaron 17,937 registros con errores de sensor (5.1% del total): valores de temperatura ≤ 1 °C, > 50 °C, o sin coordenadas. Estos registros **no fueron eliminados** de la tabla original — la vista `temperatura_aire_limpia` los excluye al consultar.
