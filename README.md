@@ -31,7 +31,7 @@ Análisis exploratorio de datos sobre registros de temperatura del aire en los 7
 corte_final/
 │
 ├── app.py                      # Aplicación Streamlit (EDA interactivo)
-├── cargar_datos.py             # Descarga, limpia e inserta datos en PostgreSQL Neon
+├── cargar_datos.py             # Script de carga de datos a PostgreSQL Neon
 ├── exportar_csv.py             # Script para exportar los datos a CSV
 ├── check.py                    # Script de verificación de conexión a la BD
 ├── requirements.txt            # Dependencias del proyecto
@@ -85,22 +85,37 @@ Reemplaza con los datos de conexión de tu proyecto en Neon. Nunca compartas est
 
 ## Uso paso a paso
 
-### Paso 1 — Cargar y limpiar los datos
+### Paso 1 — Cargar los datos
 
-Descarga los datos del IDEAM desde datos.gov.co, aplica la limpieza en Python y almacena únicamente los registros válidos en la base de datos, departamento por departamento (7 departamentos × 50,000 registros brutos).
-
-**Criterios de limpieza aplicados en Python:**
-- Se descartan registros con `valorobservado <= 1 °C` (errores de sensor / ceros)
-- Se descartan registros con `valorobservado > 50 °C` (valores imposibles para el Caribe)
-- Se descartan registros sin coordenadas (`latitud` o `longitud` nulos)
+Descarga los datos del IDEAM desde datos.gov.co y los carga en la base de datos, departamento por departamento (7 departamentos × 50,000 registros). Todos los registros originales se conservan intactos.
 
 ```powershell
 python cargar_datos.py
 ```
 
-Tarda aproximadamente 10–15 minutos. Al finalizar muestra el desglose por departamento, el total descargado y el total almacenado tras la limpieza.
+Tarda aproximadamente 10–15 minutos. Al finalizar muestra el desglose por departamento.
 
-### Paso 2 — Verificar la carga *(opcional)*
+### Paso 2 — Crear la vista de depuración
+
+Ejecuta este SQL en el editor de Neon para crear la vista que excluye errores de sensor, sin eliminar ningún registro de la tabla original:
+
+```sql
+CREATE VIEW temperatura_aire_limpia AS
+SELECT
+    id, codigoestacion, codigosensor, fechaobservacion,
+    valorobservado, nombreestacion, departamento, municipio,
+    zonahidrografica, latitud, longitud, descripcionsensor, unidadmedida
+FROM temperatura_aire
+WHERE
+    valorobservado > 1
+    AND valorobservado <= 50
+    AND latitud IS NOT NULL
+    AND longitud IS NOT NULL;
+```
+
+Esta vista filtra 17,937 registros con errores de sensor (5.1% del total), dejando la tabla original intacta con sus 350,000 registros.
+
+### Paso 3 — Verificar la carga *(opcional)*
 
 ```powershell
 python check.py
@@ -108,7 +123,7 @@ python check.py
 
 Muestra el conteo de registros por año para confirmar que los datos están correctos.
 
-### Paso 3 — Ejecutar la aplicación
+### Paso 4 — Ejecutar la aplicación
 
 ```powershell
 streamlit run app.py
@@ -122,9 +137,10 @@ La aplicación se abre en `http://localhost:8501`.
 
 | Objeto | Tipo | Registros | Descripción |
 |---|---|---|---|
-| `temperatura_aire_limpia` | Tabla | 332,063 | Datos ya limpios, insertados directamente desde Python |
+| `temperatura_aire` | Tabla | 350,000 | Datos originales sin modificar |
+| `temperatura_aire_limpia` | Vista | 332,063 | Datos depurados sin errores de sensor |
 
-La limpieza se realiza en Python durante la carga, antes de insertar en la base de datos. Los registros que no pasan los filtros nunca llegan a la BD.
+Los registros originales se conservan intactos en la tabla `temperatura_aire`. La depuración se aplica mediante una vista SQL que excluye los errores de sensor sin eliminar ningún registro del conjunto original, cumpliendo el principio de trazabilidad del dato.
 
 ---
 
@@ -404,6 +420,6 @@ Registros conectados en tiempo real desde Neon, con todos los campos visibles po
 ## Notas sobre los datos
 
 - Los datos provienen de estaciones automáticas del IDEAM con control de calidad básico.
-- Se identificaron 17,937 registros con errores de sensor (5.1% del total): valores de temperatura <= 1 °C, > 50 °C, o sin coordenadas. La limpieza se aplica en Python durante la carga — estos registros **nunca se almacenan** en la base de datos.
+- Se identificaron 17,937 registros con errores de sensor (5.1% del total): valores de temperatura ≤ 1 °C, > 50 °C, o sin coordenadas. Estos registros **no fueron eliminados** de la tabla original — la vista `temperatura_aire_limpia` los excluye al consultar.
 - El período con mayor densidad de registros es 2013–2018.
-- Córdoba presenta la mayor cantidad de registros descartados (≈15,000), causados por fallas técnicas en sensores de varias estaciones entre 2010 y 2015.
+- Córdoba presenta la mayor cantidad de valores atípicos (≈15,000), causados por fallas técnicas en sensores de varias estaciones entre 2010 y 2015. Están presentes en la tabla original pero son excluidos por la vista.
