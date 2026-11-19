@@ -30,15 +30,31 @@ Análisis exploratorio de datos sobre registros de temperatura del aire en los 7
 ```
 corte_final/
 │
-├── app.py                      # Aplicación Streamlit (EDA interactivo)
-├── cargar_datos.py             # Script de carga de datos a PostgreSQL Neon
-├── exportar_csv.py             # Script para exportar los datos a CSV
-├── check.py                    # Script de verificación de conexión a la BD
-├── requirements.txt            # Dependencias del proyecto
-├── temperatura_caribe.csv      # Datos exportados
-├── .env                        # Variables de entorno (no compartir públicamente)
-├── screenshots/                # Capturas de pantalla de la app y Power BI
-└── capturas_originales/        # Capturas originales sin renombrar
+├── app.py                          # Página de inicio y navegación
+├── pages/                          # Secciones de la app (Streamlit multipágina)
+│   ├── 00_Transformaciones.py      # Datos originales vs depurados + tabla de transformaciones
+│   ├── 01_Resumen_General.py       # KPIs principales
+│   ├── 02_Calidad_de_Datos.py      # Valores faltantes y estadísticas descriptivas
+│   ├── 03_Distribucion.py          # Histograma y boxplot por departamento
+│   ├── 04_Valores_Atipicos.py      # Detección de outliers por método IQR
+│   ├── 05_Tendencia_Temporal.py    # Evolución mensual y patrón horario diario
+│   ├── 06_Correlaciones.py         # Mapa de calor de correlaciones
+│   ├── 07_Mapa_Estaciones.py       # Mapa geográfico de estaciones meteorológicas
+│   ├── 08_Dispersion.py            # Temperatura vs hora y vs latitud (OLS)
+│   ├── 09_Analisis_Departamental.py# Temperatura media y registros por departamento
+│   ├── 10_Analisis_Municipal.py    # Ranking de municipios con slider interactivo
+│   ├── 11_Conclusiones.py          # Hallazgos dinámicos y conclusiones metodológicas
+│   └── 12_Muestra_de_Datos.py      # Tabla interactiva con descarga CSV
+├── utils/                          # Módulos compartidos
+│   └── conexion.py                 # Carga de datos desde Neon y filtros del sidebar
+├── screenshots/                    # Capturas de pantalla de la app y Power BI
+├── capturas_originales/            # Capturas originales sin renombrar
+├── cargar_datos.py                 # Script de carga de datos a PostgreSQL Neon
+├── exportar_csv.py                 # Script para exportar los datos a CSV
+├── check.py                        # Script de verificación de conexión a la BD
+├── requirements.txt                # Dependencias del proyecto
+├── temperatura_caribe.csv          # Datos exportados
+└── .env                            # Variables de entorno (no compartir públicamente)
 ```
 
 ---
