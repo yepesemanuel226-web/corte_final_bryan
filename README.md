@@ -148,7 +148,7 @@ Los registros originales se conservan intactos en la tabla `temperatura_aire`. L
 
 ## Aplicación Streamlit
 
-La app tiene 9 secciones. A continuación se muestra cada una con su captura, una descripción y el código que la construye.
+La app tiene 13 secciones. A continuación se muestra cada una con su captura, una descripción y el código que la construye.
 
 ---
 
@@ -156,7 +156,7 @@ La app tiene 9 secciones. A continuación se muestra cada una con su captura, un
 
 ![Resumen General](screenshots/01_resumen_general.png)
 
-Muestra los KPIs principales del dataset filtrado: total de registros, temperatura media, máxima y mínima, número de departamentos, estaciones, municipios y el rango temporal. Los filtros laterales por departamento y año controlan todo el análisis de forma dinámica.
+KPIs principales del dataset filtrado: total de registros, temperatura media, máxima y mínima, número de departamentos, estaciones, municipios y rango temporal. Los filtros del sidebar por departamento, municipio y año controlan todo el análisis.
 
 ```python
 col1, col2, col3, col4 = st.columns(4)
@@ -164,74 +164,74 @@ col1.metric("Total registros",    f"{len(df_f):,}")
 col2.metric("Temperatura media",  f"{df_f['valorobservado'].mean():.2f} °C")
 col3.metric("Temperatura máxima", f"{df_f['valorobservado'].max():.2f} °C")
 col4.metric("Temperatura mínima", f"{df_f['valorobservado'].min():.2f} °C")
-
-col5, col6, col7, col8 = st.columns(4)
-col5.metric("Departamentos", f"{df_f['departamento'].nunique()}")
-col6.metric("Estaciones",    f"{df_f['codigoestacion'].nunique()}")
-col7.metric("Municipios",    f"{df_f['municipio'].nunique()}")
-col8.metric("Rango temporal",
-            f"{df_f['fechaobservacion'].min().year} – {df_f['fechaobservacion'].max().year}")
 ```
 
 ---
 
-### 2. Calidad de Datos
+### 2. Datos y Transformaciones
 
-![Calidad de Datos](screenshots/02_calidad_datos.png)
+![Datos y Transformaciones](screenshots/02_transformaciones.png)
 
-Dos tablas lado a lado: conteo de valores nulos por columna con su porcentaje sobre el total, y estadísticas descriptivas (count, mean, std, min, percentiles, max) agrupadas por departamento.
+![Vista datos originales vs depurados](screenshots/02_transformaciones_tabla.png)
+
+Información del conjunto de datos (registros originales vs depurados), tabla de transformaciones aplicadas con técnica, aplicación y justificación, vista comparativa de ambos datasets y botones de descarga en CSV.
 
 ```python
-col1, col2 = st.columns(2)
-
-with col1:
-    nulos = df_f.isnull().sum().reset_index()
-    nulos.columns = ["Columna", "Valores nulos"]
-    nulos["% del total"] = (nulos["Valores nulos"] / len(df_f) * 100).round(2)
-    st.dataframe(nulos, use_container_width=True)
-
-with col2:
-    desc = df_f.groupby("departamento")["valorobservado"].describe().round(2)
-    st.dataframe(desc, use_container_width=True)
+transformaciones = pd.DataFrame([
+    {"Técnica": "Conservación de datos originales", ...},
+    {"Técnica": "Depuración mediante vista SQL", ...},
+    {"Técnica": "Conversión de tipos", ...},
+    {"Técnica": "Extracción de variables temporales", ...},
+    {"Técnica": "Filtro geográfico interactivo", ...},
+])
+st.dataframe(transformaciones, use_container_width=True, hide_index=True)
 ```
 
 ---
 
-### 3. Distribución de Temperaturas
+### 3. Calidad de Datos
 
-![Distribución de Temperaturas](screenshots/03_distribucion_temperaturas.png)
+![Calidad de Datos](screenshots/03_calidad_datos.png)
 
-Histograma superpuesto con 60 bins por departamento y diagrama de caja. Permite comparar la forma de la distribución y la dispersión entre los 7 departamentos.
+Conteo de valores nulos por columna con su porcentaje sobre el total, y estadísticas descriptivas (count, mean, std, min, percentiles, max) agrupadas por departamento.
 
 ```python
-col1, col2 = st.columns(2)
+nulos = df_f.isnull().sum().reset_index()
+nulos.columns = ["Columna", "Valores nulos"]
+nulos["% del total"] = (nulos["Valores nulos"] / len(df_f) * 100).round(2)
+st.dataframe(nulos, use_container_width=True)
 
-with col1:
-    fig_hist = px.histogram(
-        df_f, x="valorobservado", color="departamento",
-        nbins=60, barmode="overlay", opacity=0.7,
-        labels={"valorobservado": "Temperatura (°C)"},
-        title="Distribución de temperatura por departamento",
-    )
-    st.plotly_chart(fig_hist, use_container_width=True)
-
-with col2:
-    fig_box = px.box(
-        df_f, x="departamento", y="valorobservado", color="departamento",
-        labels={"valorobservado": "Temperatura (°C)"},
-        title="Boxplot de temperatura por departamento",
-    )
-    fig_box.update_layout(showlegend=False, xaxis_tickangle=-30)
-    st.plotly_chart(fig_box, use_container_width=True)
+desc = df_f.groupby("departamento")["valorobservado"].describe().round(2)
+st.dataframe(desc, use_container_width=True)
 ```
 
 ---
 
-### 4. Valores Atípicos
+### 4. Distribución de Temperaturas
 
-![Valores Atípicos](screenshots/04_valores_atipicos.png)
+![Distribución de Temperaturas](screenshots/04_distribucion_temperaturas.png)
 
-Detecta outliers con el método IQR. Los límites se calculan como Q1 − 1.5×IQR y Q3 + 1.5×IQR. Las métricas aparecen a la izquierda y el conteo de atípicos por departamento como gráfico de barras a la derecha.
+Histograma superpuesto con 60 bins por departamento y diagrama de caja. Compara la forma de la distribución y la dispersión entre los 7 departamentos.
+
+```python
+fig_hist = px.histogram(
+    df_f, x="valorobservado", color="departamento",
+    nbins=60, barmode="overlay", opacity=0.7,
+    title="Distribución de temperatura por departamento",
+)
+fig_box = px.box(
+    df_f, x="departamento", y="valorobservado", color="departamento",
+    title="Boxplot de temperatura por departamento",
+)
+```
+
+---
+
+### 5. Valores Atípicos
+
+![Valores Atípicos](screenshots/05_valores_atipicos.png)
+
+Detección de outliers con el método IQR (Q1 − 1.5×IQR / Q3 + 1.5×IQR). Métricas a la izquierda y gráfico de barras con atípicos por departamento a la derecha.
 
 ```python
 Q1  = df_f["valorobservado"].quantile(0.25)
@@ -240,157 +240,122 @@ IQR = Q3 - Q1
 lim_inf  = Q1 - 1.5 * IQR
 lim_sup  = Q3 + 1.5 * IQR
 atipicos = df_f[(df_f["valorobservado"] < lim_inf) | (df_f["valorobservado"] > lim_sup)]
-
-col1, col2 = st.columns([1, 2])
-with col1:
-    st.metric("Total valores atípicos", f"{len(atipicos):,}")
-    st.metric("% del dataset", f"{len(atipicos)/len(df_f)*100:.2f}%")
-    st.metric("Límite inferior (IQR)", f"{lim_inf:.2f} °C")
-    st.metric("Límite superior (IQR)", f"{lim_sup:.2f} °C")
-
-with col2:
-    atip_depto = atipicos.groupby("departamento").size().reset_index(name="Atípicos")
-    fig_atip = px.bar(
-        atip_depto, x="departamento", y="Atípicos", color="departamento",
-        title="Valores atípicos por departamento",
-    )
-    st.plotly_chart(fig_atip, use_container_width=True)
 ```
 
 ---
 
-### 5. Tendencia Temporal
+### 6. Tendencia Temporal
 
-![Tendencia Temporal](screenshots/05_tendencia_temporal.png)
+![Tendencia Temporal](screenshots/06_tendencia_temporal.png)
 
-Dos gráficos de línea: evolución de la temperatura media mensual por departamento (2005–2019) y el patrón promedio a lo largo de las 24 horas del día, que revela el ciclo térmico diario de cada departamento.
+Evolución de la temperatura media mensual por departamento (2005–2019) y patrón promedio por hora del día, que revela el ciclo térmico diario de cada departamento.
 
 ```python
-col1, col2 = st.columns(2)
-
-with col1:
-    temp_mensual = (
-        df_f.groupby(["anio", "mes", "departamento"])["valorobservado"]
-        .mean().reset_index()
-    )
-    temp_mensual["fecha"] = pd.to_datetime(
-        temp_mensual["anio"].astype(str) + "-" +
-        temp_mensual["mes"].astype(str).str.zfill(2) + "-01"
-    )
-    fig_line = px.line(
-        temp_mensual, x="fecha", y="valorobservado", color="departamento",
-        title="Evolución mensual de temperatura",
-    )
-    st.plotly_chart(fig_line, use_container_width=True)
-
-with col2:
-    temp_hora = (
-        df_f.groupby(["hora", "departamento"])["valorobservado"]
-        .mean().reset_index()
-    )
-    fig_hora = px.line(
-        temp_hora, x="hora", y="valorobservado", color="departamento",
-        title="Patrón diario de temperatura", markers=True,
-    )
-    fig_hora.update_xaxes(dtick=2)
-    st.plotly_chart(fig_hora, use_container_width=True)
+temp_mensual = df_f.groupby(["anio", "mes", "departamento"])["valorobservado"].mean().reset_index()
+temp_hora    = df_f.groupby(["hora", "departamento"])["valorobservado"].mean().reset_index()
 ```
 
 ---
 
-### 6. Mapa de Calor de Correlaciones
+### 7. Mapa de Calor de Correlaciones
 
-![Mapa de Calor de Correlaciones](screenshots/06_mapa_calor_correlaciones.png)
+![Mapa de Calor de Correlaciones](screenshots/07_mapa_calor_correlaciones.png)
 
-Heatmap con los coeficientes de correlación de Pearson entre las variables numéricas: temperatura, latitud, longitud, año, mes y hora. Escala RdBu centrada en 0 — azul para correlaciones positivas, rojo para negativas.
+Coeficientes de correlación de Pearson entre variables numéricas: temperatura, latitud, longitud, año, mes y hora. Escala RdBu centrada en 0.
 
 ```python
 cols_num = ["valorobservado", "latitud", "longitud", "anio", "mes", "hora"]
 corr = df_f[cols_num].corr().round(2)
-
-fig_corr = go.Figure(data=go.Heatmap(
-    z=corr.values,
-    x=corr.columns.tolist(),
-    y=corr.index.tolist(),
-    colorscale="RdBu", zmid=0,
-    text=corr.values, texttemplate="%{text}",
-))
-fig_corr.update_layout(title="Correlación entre variables numéricas", height=450)
-st.plotly_chart(fig_corr, use_container_width=True)
+fig_corr = go.Figure(data=go.Heatmap(z=corr.values, colorscale="RdBu", zmid=0))
 ```
 
 ---
 
-### 7. Mapa de Estaciones
+### 8. Mapa de Estaciones
 
-![Mapa de Estaciones](screenshots/07_mapa_estaciones.png)
+![Mapa de Estaciones](screenshots/08_mapa_estaciones.png)
 
-Mapa interactivo con las 59 estaciones meteorológicas. Cada punto está coloreado y dimensionado según la temperatura media registrada. Al pasar el cursor se muestra nombre, departamento, municipio y temperatura media.
+Mapa interactivo con las estaciones meteorológicas. Cada punto está coloreado y dimensionado según la temperatura media. Al pasar el cursor muestra nombre, departamento, municipio y temperatura media.
 
 ```python
-estaciones = (
-    df_f.groupby(["codigoestacion", "nombreestacion", "departamento",
-                  "municipio", "latitud", "longitud"])["valorobservado"]
-    .mean().reset_index()
-    .rename(columns={"valorobservado": "temp_media"})
-    .dropna(subset=["latitud", "longitud"])
-)
-
 fig_mapa = px.scatter_map(
     estaciones, lat="latitud", lon="longitud",
     color="temp_media", size="temp_media",
-    hover_name="nombreestacion",
-    hover_data={"departamento": True, "municipio": True,
-                "temp_media": ":.2f", "latitud": False, "longitud": False},
     color_continuous_scale="YlOrRd",
     map_style="carto-positron",
     zoom=5, center={"lat": 9.5, "lon": -74.5},
-    title="Temperatura media por estación meteorológica",
 )
-st.plotly_chart(fig_mapa, use_container_width=True)
 ```
 
 ---
 
-### 8. Gráficos de Dispersión
+### 9. Gráficos de Dispersión
 
-![Gráficos de Dispersión](screenshots/08_graficos_dispersion.png)
+![Gráficos de Dispersión](screenshots/09_graficos_dispersion.png)
 
-Dos scatter plots sobre una muestra de 5,000 registros: temperatura vs hora del día (izquierda) y temperatura vs latitud con línea de tendencia OLS por departamento calculada con `statsmodels` (derecha).
+Scatter plots sobre una muestra de 5,000 registros: temperatura vs hora del día y temperatura vs latitud con línea de tendencia OLS calculada con `statsmodels`.
 
 ```python
 muestra = df_f.sample(min(5000, len(df_f)), random_state=42)
-
-col1, col2 = st.columns(2)
-
-with col1:
-    fig_sc1 = px.scatter(
-        muestra, x="hora", y="valorobservado", color="departamento", opacity=0.5,
-        title="Relación entre hora del día y temperatura",
-    )
-    fig_sc1.update_traces(marker=dict(size=4))
-    st.plotly_chart(fig_sc1, use_container_width=True)
-
-with col2:
-    fig_sc2 = px.scatter(
-        muestra, x="latitud", y="valorobservado", color="departamento",
-        opacity=0.5, trendline="ols",
-        title="Relación entre latitud y temperatura",
-    )
-    fig_sc2.update_traces(marker=dict(size=4), selector=dict(mode="markers"))
-    st.plotly_chart(fig_sc2, use_container_width=True)
+fig_sc2 = px.scatter(muestra, x="latitud", y="valorobservado",
+                     color="departamento", trendline="ols")
 ```
 
 ---
 
-### 9. Muestra de Datos
+### 10. Análisis Departamental
 
-![Muestra de Datos](screenshots/09_muestra_datos.png)
+![Análisis Departamental](screenshots/10_analisis_departamental.png)
 
-Tabla interactiva con los primeros 500 registros del dataset filtrado. Permite inspeccionar los datos crudos con todas las columnas: código de estación, fecha, temperatura, departamento, municipio, zona hidrográfica y coordenadas.
+Temperatura media por departamento en gráfico de barras, participación de registros en gráfico de dona y tabla de resumen estadístico completo por departamento.
+
+```python
+temp_depto = df_f.groupby("departamento")["valorobservado"].mean().reset_index()
+fig_depto  = px.bar(temp_depto, x="departamento", y="temp_media", text="temp_media")
+fig_pie    = px.pie(reg_depto, names="departamento", values="Registros", hole=0.4)
+```
+
+---
+
+### 11. Análisis Municipal
+
+![Análisis Municipal](screenshots/11_analisis_municipal.png)
+
+Ranking de municipios con slider interactivo (5–30 municipios), gráficos horizontales de temperatura media y cantidad de registros, y tabla completa de todos los municipios analizados.
+
+```python
+top_n = st.slider("Cantidad de municipios a visualizar", min_value=5, max_value=30, value=15)
+muni_resumen = df_f.groupby(["departamento", "municipio"])["valorobservado"].agg(
+    Registros="count", temp_media="mean", temp_max="max", temp_min="min"
+).reset_index()
+```
+
+---
+
+### 12. Muestra de Datos
+
+![Muestra de Datos](screenshots/12_muestra_datos.png)
+
+Tabla interactiva con los primeros 500 registros del dataset filtrado con todas las columnas.
 
 ```python
 st.dataframe(df_f.head(500), use_container_width=True)
+```
+
+---
+
+### 13. Conclusiones
+
+![Conclusiones](screenshots/13_conclusiones.png)
+
+![Conclusiones metodológicas](screenshots/13_conclusiones_2.png)
+
+Resumen dinámico de hallazgos calculado sobre los datos filtrados actualmente (departamento más cálido, municipio con mayor temperatura, hora pico, atípicos) y conclusiones metodológicas del proceso de análisis.
+
+```python
+depto_mas_calido = df_f.groupby("departamento")["valorobservado"].mean().idxmax()
+muni_mas_calido  = df_f.groupby("municipio")["valorobservado"].mean().idxmax()
+hora_pico        = df_f.groupby("hora")["valorobservado"].mean().idxmax()
 ```
 
 ---

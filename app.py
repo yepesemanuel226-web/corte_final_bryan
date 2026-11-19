@@ -19,9 +19,27 @@ df_orig, df = cargar_datos()
 df_f = sidebar_filtros(df)
 
 
-# ── 0. Datos y Transformaciones ───────────────────────────────────────────────
+# ── 1. Resumen General ────────────────────────────────────────────────────────
 st.markdown("---")
-st.header("0. Datos y Transformaciones")
+st.header("1. Resumen General")
+
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Total registros",    f"{len(df_f):,}")
+col2.metric("Temperatura media",  f"{df_f['valorobservado'].mean():.2f} °C")
+col3.metric("Temperatura máxima", f"{df_f['valorobservado'].max():.2f} °C")
+col4.metric("Temperatura mínima", f"{df_f['valorobservado'].min():.2f} °C")
+
+col5, col6, col7, col8 = st.columns(4)
+col5.metric("Departamentos", f"{df_f['departamento'].nunique()}")
+col6.metric("Estaciones",    f"{df_f['codigoestacion'].nunique()}")
+col7.metric("Municipios",    f"{df_f['municipio'].nunique()}")
+col8.metric("Rango temporal",
+            f"{df_f['fechaobservacion'].min().year} – {df_f['fechaobservacion'].max().year}")
+
+
+# ── 2. Datos y Transformaciones ───────────────────────────────────────────────
+st.markdown("---")
+st.header("2. Datos y Transformaciones")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -89,27 +107,9 @@ with col2:
                        data=csv_dep, file_name="temperatura_filtrada.csv", mime="text/csv")
 
 
-# ── 1. Resumen General ────────────────────────────────────────────────────────
+# ── 3. Calidad de Datos ───────────────────────────────────────────────────────
 st.markdown("---")
-st.header("1. Resumen General")
-
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Total registros",    f"{len(df_f):,}")
-col2.metric("Temperatura media",  f"{df_f['valorobservado'].mean():.2f} °C")
-col3.metric("Temperatura máxima", f"{df_f['valorobservado'].max():.2f} °C")
-col4.metric("Temperatura mínima", f"{df_f['valorobservado'].min():.2f} °C")
-
-col5, col6, col7, col8 = st.columns(4)
-col5.metric("Departamentos", f"{df_f['departamento'].nunique()}")
-col6.metric("Estaciones",    f"{df_f['codigoestacion'].nunique()}")
-col7.metric("Municipios",    f"{df_f['municipio'].nunique()}")
-col8.metric("Rango temporal",
-            f"{df_f['fechaobservacion'].min().year} – {df_f['fechaobservacion'].max().year}")
-
-
-# ── 2. Calidad de Datos ───────────────────────────────────────────────────────
-st.markdown("---")
-st.header("2. Calidad de Datos")
+st.header("3. Calidad de Datos")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -125,9 +125,9 @@ with col2:
     st.dataframe(desc, use_container_width=True)
 
 
-# ── 3. Distribución de Temperaturas ──────────────────────────────────────────
+# ── 4. Distribución de Temperaturas ──────────────────────────────────────────
 st.markdown("---")
-st.header("3. Distribución de Temperaturas")
+st.header("4. Distribución de Temperaturas")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -152,9 +152,9 @@ with col2:
     st.plotly_chart(fig_box, use_container_width=True)
 
 
-# ── 4. Valores Atípicos ───────────────────────────────────────────────────────
+# ── 5. Valores Atípicos ───────────────────────────────────────────────────────
 st.markdown("---")
-st.header("4. Valores Atípicos")
+st.header("5. Valores Atípicos")
 
 Q1  = df_f["valorobservado"].quantile(0.25)
 Q3  = df_f["valorobservado"].quantile(0.75)
@@ -184,9 +184,9 @@ with col2:
         st.plotly_chart(fig_atip, use_container_width=True)
 
 
-# ── 5. Tendencia Temporal ─────────────────────────────────────────────────────
+# ── 6. Tendencia Temporal ─────────────────────────────────────────────────────
 st.markdown("---")
-st.header("5. Tendencia Temporal")
+st.header("6. Tendencia Temporal")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -222,9 +222,9 @@ with col2:
     st.plotly_chart(fig_hora, use_container_width=True)
 
 
-# ── 6. Mapa de Calor de Correlaciones ────────────────────────────────────────
+# ── 7. Mapa de Calor de Correlaciones ────────────────────────────────────────
 st.markdown("---")
-st.header("6. Mapa de Calor de Correlaciones")
+st.header("7. Mapa de Calor de Correlaciones")
 
 cols_num = ["valorobservado", "latitud", "longitud", "anio", "mes", "hora"]
 corr = df_f[cols_num].corr().round(2)
@@ -240,9 +240,9 @@ fig_corr.update_layout(title="Correlación entre variables numéricas", height=4
 st.plotly_chart(fig_corr, use_container_width=True)
 
 
-# ── 7. Mapa de Estaciones ─────────────────────────────────────────────────────
+# ── 8. Mapa de Estaciones ─────────────────────────────────────────────────────
 st.markdown("---")
-st.header("7. Mapa de Estaciones")
+st.header("8. Mapa de Estaciones")
 
 estaciones = (
     df_f.groupby(["codigoestacion", "nombreestacion", "departamento",
@@ -270,9 +270,9 @@ else:
     st.plotly_chart(fig_mapa, use_container_width=True)
 
 
-# ── 8. Gráficos de Dispersión ─────────────────────────────────────────────────
+# ── 9. Gráficos de Dispersión ─────────────────────────────────────────────────
 st.markdown("---")
-st.header("8. Gráficos de Dispersión")
+st.header("9. Gráficos de Dispersión")
 
 muestra = df_f.sample(min(5000, len(df_f)), random_state=42)
 
@@ -299,9 +299,9 @@ with col2:
     st.plotly_chart(fig_sc2, use_container_width=True)
 
 
-# ── 9. Análisis Departamental ─────────────────────────────────────────────────
+# ── 10. Análisis Departamental ────────────────────────────────────────────────
 st.markdown("---")
-st.header("9. Análisis Departamental")
+st.header("10. Análisis Departamental")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -345,9 +345,9 @@ resumen_depto = (
 st.dataframe(resumen_depto, use_container_width=True, hide_index=True)
 
 
-# ── 10. Análisis Municipal ────────────────────────────────────────────────────
+# ── 11. Análisis Municipal ────────────────────────────────────────────────────
 st.markdown("---")
-st.header("10. Análisis Municipal")
+st.header("11. Análisis Municipal")
 
 top_n = st.slider("Cantidad de municipios a visualizar", min_value=5, max_value=30, value=15)
 
@@ -398,17 +398,17 @@ st.dataframe(
 )
 
 
-# ── 11. Muestra de Datos ──────────────────────────────────────────────────────
+# ── 12. Muestra de Datos ──────────────────────────────────────────────────────
 st.markdown("---")
-st.header("11. Muestra de Datos")
+st.header("12. Muestra de Datos")
 st.dataframe(df_f.head(500), use_container_width=True)
 
 
-# ── 12. Conclusiones ──────────────────────────────────────────────────────────
+# ── 13. Conclusiones ──────────────────────────────────────────────────────────
 st.markdown("---")
-st.header("12. Conclusiones")
+st.header("13. Conclusiones")
 
-temp_media_gral = df_f["valorobservado"].mean()
+temp_media_gral  = df_f["valorobservado"].mean()
 depto_mas_calido = df_f.groupby("departamento")["valorobservado"].mean().idxmax()
 depto_mas_frio   = df_f.groupby("departamento")["valorobservado"].mean().idxmin()
 muni_mas_calido  = df_f.groupby("municipio")["valorobservado"].mean().idxmax()
