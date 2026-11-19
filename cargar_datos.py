@@ -23,8 +23,12 @@ DEPTOS_CARIBE = [
     "SUCRE",
 ]
 
+# Reglas de limpieza aplicadas en Python antes de insertar
+TEMP_MIN = 1      # °C — valores <= 1 son errores de sensor
+TEMP_MAX = 50     # °C — valores > 50 son imposibles para el Caribe
+
 CREATE_TABLE_SQL = """
-CREATE TABLE IF NOT EXISTS temperatura_aire (
+CREATE TABLE IF NOT EXISTS temperatura_aire_limpia (
     id                  SERIAL PRIMARY KEY,
     codigoestacion      TEXT,
     codigosensor        TEXT,
@@ -42,13 +46,13 @@ CREATE TABLE IF NOT EXISTS temperatura_aire (
 """
 
 CREATE_INDEXES_SQL = [
-    "CREATE INDEX IF NOT EXISTS idx_temp_fecha        ON temperatura_aire (fechaobservacion);",
-    "CREATE INDEX IF NOT EXISTS idx_temp_departamento ON temperatura_aire (departamento);",
-    "CREATE INDEX IF NOT EXISTS idx_temp_estacion     ON temperatura_aire (codigoestacion);",
+    "CREATE INDEX IF NOT EXISTS idx_limpia_fecha        ON temperatura_aire_limpia (fechaobservacion);",
+    "CREATE INDEX IF NOT EXISTS idx_limpia_departamento ON temperatura_aire_limpia (departamento);",
+    "CREATE INDEX IF NOT EXISTS idx_limpia_estacion     ON temperatura_aire_limpia (codigoestacion);",
 ]
 
 INSERT_SQL = """
-INSERT INTO temperatura_aire
+INSERT INTO temperatura_aire_limpia
     (codigoestacion, codigosensor, fechaobservacion, valorobservado,
      nombreestacion, departamento, municipio, zonahidrografica,
      latitud, longitud, descripcionsensor, unidadmedida)
@@ -76,6 +80,7 @@ def descargar_bloque(departamento, offset, limit, reintentos=4):
 
 
 def parsear_fila(row):
+    """Convierte tipos y retorna la tupla, o None si el registro no pasa la limpieza."""
     def safe_float(v):
         try:
             return float(v) if v not in ("", None) else None
@@ -85,28 +90,43 @@ def parsear_fila(row):
     def safe_ts(v):
         return v.replace(".000", "") if v else None
 
+    temp = safe_float(row.get("valorobservado"))
+    lat  = safe_float(row.get("latitud"))
+    lon  = safe_float(row.get("longitud"))
+
+    # --- Limpieza en Python ---
+    # 1. Descartar si la temperatura es nula, <= TEMP_MIN o > TEMP_MAX
+    if temp is None or temp <= TEMP_MIN or temp > TEMP_MAX:
+        return None
+    # 2. Descartar si no tiene coordenadas
+    if lat is None or lon is None:
+        return None
+    # --------------------------
+
     return (
         row.get("codigoestacion"),
         row.get("codigosensor"),
         safe_ts(row.get("fechaobservacion")),
-        safe_float(row.get("valorobservado")),
+        temp,
         row.get("nombreestacion"),
         row.get("departamento"),
         row.get("municipio"),
         row.get("zonahidrografica"),
-        safe_float(row.get("latitud")),
-        safe_float(row.get("longitud")),
+        lat,
+        lon,
         row.get("descripcionsensor"),
         row.get("unidadmedida"),
     )
 
 
 def cargar_departamento(conn, departamento):
-    offset = 0
-    total  = 0
+    offset        = 0
+    total_vistos  = 0   # filas descargadas de la API
+    total_limpios = 0   # filas que pasaron la limpieza e ingresaron a la BD
+    descartados   = 0   # filas eliminadas por la limpieza
 
     while True:
-        restante = MAX_POR_DEPTO - total
+        restante = MAX_POR_DEPTO - total_vistos
         if restante <= 0:
             break
 
@@ -117,18 +137,29 @@ def cargar_departamento(conn, departamento):
         if not filas:
             break
 
-        with conn.cursor() as cur:
-            cur.executemany(INSERT_SQL, [parsear_fila(f) for f in filas])
-        conn.commit()
+        filas_limpias = []
+        for f in filas:
+            parsed = parsear_fila(f)
+            if parsed is not None:
+                filas_limpias.append(parsed)
+            else:
+                descartados += 1
 
-        total += len(filas)
+        if filas_limpias:
+            with conn.cursor() as cur:
+                cur.executemany(INSERT_SQL, filas_limpias)
+            conn.commit()
+
+        total_vistos  += len(filas)
+        total_limpios += len(filas_limpias)
 
         if len(filas) < bloque:
             break
 
         offset += bloque
 
-    return total
+    print(f"    Descartados por limpieza: {descartados:,}")
+    return total_vistos, total_limpios
 
 
 def main():
@@ -140,23 +171,32 @@ def main():
             conn.execute(idx)
         conn.commit()
 
-        prev = conn.execute("SELECT COUNT(*) FROM temperatura_aire;").fetchone()[0]
+        prev = conn.execute("SELECT COUNT(*) FROM temperatura_aire_limpia;").fetchone()[0]
         if prev > 0:
             print(f"  Había {prev:,} filas. Borrando para cargar de nuevo...")
-            conn.execute("TRUNCATE TABLE temperatura_aire RESTART IDENTITY;")
+            conn.execute("TRUNCATE TABLE temperatura_aire_limpia RESTART IDENTITY;")
             conn.commit()
 
-        for depto in DEPTOS_CARIBE:
-            print(f"\n[{depto}] Descargando...")
-            n = cargar_departamento(conn, depto)
-            print(f"[{depto}] {n:,} filas cargadas.")
+        total_vistos  = 0
+        total_limpios = 0
 
-        count = conn.execute("SELECT COUNT(*) FROM temperatura_aire;").fetchone()[0]
-        print(f"\nTotal: {count:,} registros cargados.")
+        for depto in DEPTOS_CARIBE:
+            print(f"\n[{depto}] Descargando y limpiando...")
+            vistos, limpios = cargar_departamento(conn, depto)
+            total_vistos  += vistos
+            total_limpios += limpios
+            print(f"[{depto}] {vistos:,} descargados → {limpios:,} almacenados.")
+
+        print(f"\n{'='*50}")
+        print(f"Total descargados de la API : {total_vistos:,}")
+        print(f"Total almacenados (limpios) : {total_limpios:,}")
+        print(f"Descartados por limpieza    : {total_vistos - total_limpios:,} "
+              f"({(total_vistos - total_limpios) / total_vistos * 100:.1f}%)")
 
         print("\nDesglose por departamento:")
         rows = conn.execute(
-            "SELECT departamento, COUNT(*) FROM temperatura_aire GROUP BY departamento ORDER BY COUNT(*) DESC;"
+            "SELECT departamento, COUNT(*) FROM temperatura_aire_limpia "
+            "GROUP BY departamento ORDER BY COUNT(*) DESC;"
         ).fetchall()
         for r in rows:
             print(f"  {r[0]:<20} {r[1]:>10,}")
