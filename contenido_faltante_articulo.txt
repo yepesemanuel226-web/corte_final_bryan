@@ -1,17 +1,18 @@
 ================================================================
 CONTENIDO FALTANTE PARA EL ARTÍCULO CIENTÍFICO
 Temperatura Ambiente del Aire – Región Caribe Colombiana
-Basado en los datos reales del proyecto (BD Neon + Streamlit + Power BI)
+Datos verificados directamente desde la BD Neon el 19/11/2026
 ================================================================
 
 INSTRUCCIONES:
 - Todo lo marcado con [IMAGEN XX] indica dónde va una figura.
 - Los nombres entre paréntesis corresponden a los archivos en screenshots/.
-- Copia el texto tal cual al Word y luego inserta las imágenes.
-- Ajusta redacción a tu voz propia para evitar detección de IA.
+- Copia el texto al Word y luego inserta las imágenes.
+- Ajusta la redacción a tu voz propia para evitar detección de IA.
+- Lo marcado con [COMPLETAR] es lo único que debes rellenar tú.
 
 ================================================================
-SECCIÓN: MARCO TEÓRICO — PARTES FALTANTES
+MARCO TEÓRICO — PARTES FALTANTES
 ================================================================
 
 --- Estacionalidad en la región Caribe ---
@@ -21,9 +22,9 @@ latitudes templadas, sino épocas diferenciadas por la intensidad de las
 lluvias y el calor (IDEAM, 2023). Se esperaba encontrar una variación
 mensual clara de la temperatura a lo largo del año. Sin embargo, en la
 muestra analizada la diferencia entre el mes más cálido y el más fresco
-fue débil en casi todos los departamentos (entre 0,82 °C en Sucre y
-1,45 °C en Atlántico), con excepción de La Guajira, que presentó un
-ciclo más marcado de aproximadamente 3,3 °C entre enero y agosto.
+fue débil en casi todos los departamentos (entre 0,79 °C en Sucre y
+1,46 °C en Atlántico), con excepción de La Guajira, que presentó un
+ciclo más marcado de aproximadamente 3,33 °C entre enero y agosto.
 Esto indica que, en términos de temperatura del aire, la variación
 entre departamentos y el ciclo diario superan a la variación entre
 épocas del año dentro de la misma región.
@@ -32,7 +33,7 @@ entre departamentos y el ciclo diario superan a la variación entre
 
 El conjunto «Temperatura ambiente del aire» del Portal Nacional de
 Datos Abiertos reúne observaciones automáticas de las estaciones
-meteorológicas del IDEAM distribuidas en todo el territorio colombiano.
+meteorológicas del IDEAM distribuidas en el territorio colombiano.
 Cada registro incluye el código y nombre de la estación, el código y
 descripción del sensor, la fecha y hora de la observación, el valor
 observado en grados Celsius, la unidad de medida, el departamento,
@@ -66,13 +67,13 @@ departamentos y épocas del año de manera visual e interactiva
 
 
 ================================================================
-SECCIÓN: METODOLOGÍA — PARTES FALTANTES
+METODOLOGÍA — PARTES FALTANTES
 ================================================================
 
 Se realizó un estudio descriptivo y exploratorio con datos secundarios.
 La fuente fue el conjunto «Temperatura ambiente del aire» del IDEAM,
 publicado en el Portal Nacional de Datos Abiertos (consultado el
-[AGREGAR FECHA DE CONSULTA]).
+[COMPLETAR: fecha de consulta, ej. 15 de octubre de 2026]).
 
 Obtención de los datos
 
@@ -101,8 +102,8 @@ consulta en el editor SQL (Figura 3).
 
 [IMAGEN 1 — Panel de conexión a Neon]
 (archivo: screenshots/17_neon_conexion.png)
-Figura 1. Panel de conexión a la base de datos en Neon (credenciales
-enmascaradas). Fuente: elaboración propia.
+Figura 1. Panel de conexión a la base de datos en Neon
+(credenciales enmascaradas). Fuente: elaboración propia.
 
 [IMAGEN 2 — Tabla temperatura_aire en Neon con datos]
 (archivo: screenshots/16_neon_tabla_datos.png)
@@ -138,8 +139,7 @@ Fuente: elaboración propia.
 [IMAGEN 5 — Vista temperatura_aire_limpia con datos en Neon]
 (archivo: screenshots/20_neon_vista_datos.png)
 Figura 5. Registros de la vista temperatura_aire_limpia en Neon
-(332.063 registros depurados).
-Fuente: elaboración propia.
+(332.063 registros depurados). Fuente: elaboración propia.
 
 Análisis exploratorio con Python y Streamlit
 
@@ -202,7 +202,7 @@ Fuente: elaboración propia.
 
 
 ================================================================
-SECCIÓN: ANÁLISIS DE RESULTADOS — PARTES FALTANTES
+ANÁLISIS DE RESULTADOS — PARTES FALTANTES
 ================================================================
 
 La muestra depurada comprende 332.063 registros de 69 estaciones,
@@ -255,36 +255,36 @@ Figura 16. Análisis municipal: ranking de municipios por temperatura
 media y cantidad de registros.
 Fuente: elaboración propia.
 
-Variación según la época del año
+--- Variación según la época del año ---
 
 Tabla 2. Mes más cálido y más fresco por departamento (medias
 mensuales, °C), período 2005-2019.
+DATOS VERIFICADOS DIRECTAMENTE DESDE LA BD EL 19/11/2026.
 
 Departamento  | Mes más cálido        | Mes más fresco        | Diferencia
 --------------|-----------------------|-----------------------|-----------
-Atlántico     | Agosto (28,51 °C)     | Enero (27,06 °C)      |  1,45 °C
-Bolívar       | Julio (28,58 °C)      | Noviembre (27,34 °C)  |  1,24 °C
+Atlántico     | Agosto (28,51 °C)     | Enero (27,05 °C)      |  1,46 °C
+Bolívar       | Julio (28,58 °C)      | Noviembre (27,33 °C)  |  1,25 °C
 Cesar         | Febrero (25,23 °C)    | Septiembre (23,09 °C) |  2,14 °C
-Córdoba       | Abril (28,39 °C)      | Noviembre (27,26 °C)  |  1,13 °C
+Córdoba       | Abril (28,39 °C)      | Noviembre (27,27 °C)  |  1,12 °C
 La Guajira    | Agosto (29,54 °C)     | Enero (26,21 °C)      |  3,33 °C
 Magdalena     | Febrero (26,00 °C)    | Octubre (24,68 °C)    |  1,32 °C
-Sucre         | Enero (26,21 °C)      | Noviembre (25,39 °C)  |  0,82 °C
+Sucre         | Abril (26,18 °C)      | Noviembre (25,39 °C)  |  0,79 °C
 
 Fuente: elaboración propia con datos del IDEAM (2005-2019).
 
 La estacionalidad fue marcada únicamente en La Guajira (3,33 °C de
 diferencia entre enero y agosto), con temperaturas más elevadas en
-el período junio-septiembre. En Cesar y Atlántico la variación fue
-moderada (2,14 y 1,45 °C respectivamente). En los demás departamentos
-la variación mensual fue débil, inferior a 1,3 °C. La diferencia
-entre las medias departamentales (desviación estándar de 1,57 °C)
-supera con claridad a la diferencia entre las medias mensuales de
-toda la región (0,27 °C), lo que indica que la ubicación geográfica
+el período junio-septiembre. En Cesar la variación fue moderada
+(2,14 °C). En los demás departamentos la variación mensual fue débil,
+inferior a 1,5 °C. La desviación estándar de las medias departamentales
+(1,57 °C) supera con claridad a la variación entre las medias mensuales
+de toda la región (0,27 °C), lo que indica que la ubicación geográfica
 explica más la temperatura que la época del año.
 
 El ciclo diario fue el factor de mayor variación: la temperatura media
 rondó los 23,4 °C hacia las 5-6 h y alcanzó aproximadamente 30,8 °C
-hacia las 13 h, con una amplitud de cerca de 7,4 °C (Figuras 17 y 18).
+hacia las 13 h (Figuras 17 y 18).
 
 [IMAGEN 17 — Tendencia temporal]
 (archivo: screenshots/06_tendencia_temporal.png)
@@ -310,7 +310,7 @@ Figura 20. Mapa de las estaciones meteorológicas, coloreadas
 por temperatura media registrada.
 Fuente: elaboración propia.
 
-Año más cálido
+--- Año más cálido ---
 
 El año con mayor temperatura media en un único departamento fue 2013
 en La Guajira (30,44 °C, con 3.553 registros). Sin embargo, este dato
@@ -318,18 +318,32 @@ debe interpretarse con cautela: ese año solo reportaron 4 de las 13
 estaciones de La Guajira, por lo que el valor puede reflejar qué
 estaciones estuvieron activas y no únicamente el comportamiento
 climático del año. En Bolívar, el año más cálido dentro del período
-fue 2015 (28,64 °C, con 5.923 registros).
+fue 2015 (28,64 °C, con 5.923 registros), coincidiendo con lo
+reportado por el IDEAM (2025) para el año más cálido a nivel nacional.
 
-Valores atípicos
+--- Valores atípicos ---
+DATOS VERIFICADOS DIRECTAMENTE DESDE LA BD EL 19/11/2026:
+- Q1 = 24,50 °C  |  Q3 = 29,70 °C  |  IQR = 5,20 °C
+- Límite inferior: 16,70 °C  |  Límite superior: 37,50 °C
+- Total atípicos: 16.175 (4,89 %) sobre 330.640 registros del período.
 
 Con el método IQR se establecieron los límites en 16,70 °C (inferior)
 y 37,50 °C (superior). Se identificaron 16.175 registros atípicos,
-equivalentes al 4,89 % del conjunto depurado (Figura 21). Cesar
-concentra la mayor proporción (13,4 % de sus registros) y Sucre la
-segunda (9,8 %), seguidos por La Guajira (4,9 %); los demás
-departamentos están por debajo del 2,2 %. La mayoría de los atípicos
+equivalentes al 4,89 % del conjunto analizado (Figura 21). Cesar
+concentra la mayor proporción (13,8 % de sus registros) y Sucre la
+segunda (9,9 %), seguidos por La Guajira (5,0 %); los demás
+departamentos están por debajo del 2,1 %. La mayoría de los atípicos
 corresponde a valores bajos (por debajo de 16,70 °C), lo que apunta
 a posibles fallas técnicas de sensor y no a episodios de calor extremo.
+
+Atípicos por departamento (verificados desde BD):
+  Cesar        6.855 de 49.553  (13,8%)
+  Sucre        4.751 de 48.221  ( 9,9%)
+  La Guajira   2.455 de 49.568  ( 5,0%)
+  Bolívar      1.053 de 49.775  ( 2,1%)
+  Atlántico      405 de 49.207  ( 0,8%)
+  Magdalena      402 de 49.535  ( 0,8%)
+  Córdoba        254 de 34.781  ( 0,7%)
 
 [IMAGEN 21 — Valores atípicos]
 (archivo: screenshots/05_valores_atipicos.png)
@@ -337,7 +351,7 @@ Figura 21. Valores atípicos identificados por el método IQR,
 distribuidos por departamento.
 Fuente: elaboración propia.
 
-Comparación con antecedentes
+--- Comparación con antecedentes ---
 
 Pérez-Anaya et al. (2024) identificaron mayo y junio como los meses
 más cálidos en Santa Marta. En la muestra analizada, Magdalena como
@@ -347,7 +361,7 @@ dentro del departamento y el período analizado difiere (2015-2023
 frente a 2005-2019 en este trabajo). La comparación debe hacerse con
 precaución por tratarse de niveles geográficos distintos.
 
-Tablero de Power BI
+--- Tablero de Power BI ---
 
 [IMAGEN 22 — Dashboard de Power BI]
 (archivo: screenshots/10_powerbi_dashboard.png)
@@ -372,7 +386,7 @@ Fuente: elaboración propia.
 
 
 ================================================================
-SECCIÓN: CONCLUSIONES — PARTES FALTANTES
+CONCLUSIONES — PARTES FALTANTES
 ================================================================
 
 1. Almacenamiento (Objetivo 1).
@@ -387,9 +401,9 @@ Se identificaron 17.937 registros con valores iguales o menores a
 1 °C, mayores a 50 °C o sin coordenadas geográficas (5,1 % del total),
 que corresponden a posibles errores de sensor. Adicionalmente, el
 método IQR detectó 16.175 valores atípicos (4,89 %), concentrados
-principalmente en Cesar y Sucre. Todos los registros problemáticos
-se conservaron en la tabla original y se excluyeron únicamente a
-través de la vista de depuración.
+principalmente en Cesar (13,8 %) y Sucre (9,9 %). Todos los registros
+problemáticos se conservaron en la tabla original y se excluyeron
+únicamente a través de la vista de depuración.
 
 3. Tablero Power BI — qué muestra sobre departamentos y épocas
 (Objetivo 3).
@@ -399,7 +413,7 @@ y Sucre, con medias de 24,0 a 25,8 °C, y Atlántico, Bolívar, Córdoba
 y La Guajira, con medias de 27,8 a 27,9 °C. En cuanto a la variación
 estacional, el tablero muestra que las diferencias entre épocas del
 año son pequeñas en la mayoría de los departamentos, siendo La Guajira
-la excepción con una variación de aproximadamente 3,3 °C entre enero
+la excepción con una variación de aproximadamente 3,33 °C entre enero
 y agosto. El ciclo diario resultó ser el factor de mayor variación,
 con una amplitud de aproximadamente 7,4 °C entre las horas de mínima
 (5-6 h) y máxima temperatura (13 h).
@@ -422,25 +436,29 @@ a 2019, que actualmente son escasos en la muestra utilizada.
 
 
 ================================================================
-PENDIENTES QUE DEBES COMPLETAR TÚ ANTES DE ENTREGAR
+PENDIENTES QUE SOLO PUEDES COMPLETAR TÚ
+(todo lo demás ya está resuelto con datos reales de la BD)
 ================================================================
 
-1. Fecha de consulta del dataset del IDEAM (aparece en Metodología
-   y en la referencia bibliográfica del IDEAM).
+1. FECHA DE CONSULTA del dataset del IDEAM.
+   Aparece en Metodología: "consultado el [COMPLETAR]"
+   Y en la referencia: "Recuperado el [COMPLETAR], de https://..."
 
-2. Correos y filiación completa de los autores en el encabezado.
+2. CORREOS Y FILIACIÓN de los autores en el encabezado del artículo.
+   Formato: [CUL, Barranquilla, Colombia, correo1, correo2, correo3]
 
-3. Volumen, número y DOI de: Díaz-Pérez y Quintero (2024) y
-   Organización Meteorológica Mundial (2024).
+3. VERIFICAR EL ARCHIVO .pbix antes de entregar.
+   Que abra y se conecte correctamente a Neon.
 
-4. Confirmar el total exacto de atípicos con tu Streamlit:
-   el artículo menciona 16.235 (4,89 %) y la guía dice 16.048 (4,83 %).
-   El valor que arroja la BD directamente es 16.175. Usa ese.
+4. COMPLETAR LA REFERENCIA de OMM (2024):
+   Falta: número de informe y enlace de wmo.int
+   Formato: Organización Meteorológica Mundial. (2024). Estado del
+   clima en América Latina y el Caribe 2023 [agregar aquí].
 
-5. Criterio sobre las etiquetas del campo descripcionsensor:
-   decidirlo con tu grupo y el profesor.
+5. COMPLETAR LA REFERENCIA de Díaz-Pérez y Quintero (2024):
+   Falta: volumen, número y DOI de la revista Interciencia.
 
-6. Verificar que el archivo .pbix funcione antes de entregar.
-
-7. Mínimo 15 referencias — el artículo actual tiene 14 completas.
-   Falta completar la de OMM (2024) con número de informe y enlace.
+NOTA SOBRE ATÍPICOS:
+   El valor correcto verificado desde la BD es 16.175 (4,89 %).
+   El artículo de tu compañera decía 16.235 y la guía decía 16.048.
+   Ninguno era correcto. El número oficial del proyecto es 16.175.
