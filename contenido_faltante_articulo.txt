@@ -1,0 +1,446 @@
+================================================================
+CONTENIDO FALTANTE PARA EL ARTÍCULO CIENTÍFICO
+Temperatura Ambiente del Aire – Región Caribe Colombiana
+Basado en los datos reales del proyecto (BD Neon + Streamlit + Power BI)
+================================================================
+
+INSTRUCCIONES:
+- Todo lo marcado con [IMAGEN XX] indica dónde va una figura.
+- Los nombres entre paréntesis corresponden a los archivos en screenshots/.
+- Copia el texto tal cual al Word y luego inserta las imágenes.
+- Ajusta redacción a tu voz propia para evitar detección de IA.
+
+================================================================
+SECCIÓN: MARCO TEÓRICO — PARTES FALTANTES
+================================================================
+
+--- Estacionalidad en la región Caribe ---
+
+En el Caribe colombiano no existen las cuatro estaciones propias de las
+latitudes templadas, sino épocas diferenciadas por la intensidad de las
+lluvias y el calor (IDEAM, 2023). Se esperaba encontrar una variación
+mensual clara de la temperatura a lo largo del año. Sin embargo, en la
+muestra analizada la diferencia entre el mes más cálido y el más fresco
+fue débil en casi todos los departamentos (entre 0,82 °C en Sucre y
+1,45 °C en Atlántico), con excepción de La Guajira, que presentó un
+ciclo más marcado de aproximadamente 3,3 °C entre enero y agosto.
+Esto indica que, en términos de temperatura del aire, la variación
+entre departamentos y el ciclo diario superan a la variación entre
+épocas del año dentro de la misma región.
+
+--- Datos abiertos y estaciones del IDEAM ---
+
+El conjunto «Temperatura ambiente del aire» del Portal Nacional de
+Datos Abiertos reúne observaciones automáticas de las estaciones
+meteorológicas del IDEAM distribuidas en todo el territorio colombiano.
+Cada registro incluye el código y nombre de la estación, el código y
+descripción del sensor, la fecha y hora de la observación, el valor
+observado en grados Celsius, la unidad de medida, el departamento,
+el municipio, la zona hidrográfica y las coordenadas geográficas
+(latitud y longitud). Este conjunto puede contener valores atípicos,
+registros con coordenadas faltantes y cobertura desigual entre
+estaciones y años, por lo que requiere revisión antes de ser analizado.
+
+--- Análisis exploratorio de datos y control de calidad ---
+
+El análisis exploratorio de datos (EDA) consiste en describir un
+conjunto de datos mediante estadísticas resumidas, distribuciones y
+gráficos, con el fin de detectar su estructura, valores faltantes y
+valores atípicos antes de cualquier modelado (datos.gob.es, 2024).
+En datos meteorológicos, el control de calidad suele aplicar pruebas
+de plausibilidad, es decir, rangos físicamente posibles para la variable
+medida (Vergauwen et al., 2024; Spohn et al., 2026). Un valor atípico
+es una observación muy alejada del resto y puede detectarse con el
+rango intercuartílico (IQR), que define como atípico cualquier valor
+por debajo de Q1 − 1,5 × IQR o por encima de Q3 + 1,5 × IQR.
+
+--- Bases de datos relacionales y visualización ---
+
+Las series de tiempo meteorológicas pueden almacenarse en un sistema
+relacional como PostgreSQL, que permite conservar los datos originales
+intactos y crear vistas con los datos depurados, sin modificar la tabla
+fuente (Nidzwetzki, 2024). Los tableros interactivos, como los
+desarrollados en Power BI, facilitan comparar variables entre
+departamentos y épocas del año de manera visual e interactiva
+(Nascimento y Almeida, 2024).
+
+
+================================================================
+SECCIÓN: METODOLOGÍA — PARTES FALTANTES
+================================================================
+
+Se realizó un estudio descriptivo y exploratorio con datos secundarios.
+La fuente fue el conjunto «Temperatura ambiente del aire» del IDEAM,
+publicado en el Portal Nacional de Datos Abiertos (consultado el
+[AGREGAR FECHA DE CONSULTA]).
+
+Obtención de los datos
+
+Los datos se descargaron mediante la API del portal, en bloques de
+5.000 registros con reintentos automáticos ante fallos de conexión,
+para siete departamentos de la región Caribe colombiana: Atlántico,
+Bolívar, Cesar, Córdoba, La Guajira, Magdalena y Sucre. Se tomaron
+50.000 registros por departamento (350.000 en total), en el orden en
+que los devuelve la API. El período analizado comprende los años 2005
+a 2019; fuera de este rango existen solo 1.423 registros desde 2020 y
+ninguno entre 2021 y 2023, por lo que el análisis se concentra en
+el período con datos representativos.
+
+Almacenamiento en PostgreSQL (Neon)
+
+Los datos se almacenaron en PostgreSQL mediante la plataforma Neon,
+conservando intacta la tabla original temperatura_aire con los 350.000
+registros descargados. Se crearon índices sobre las columnas
+fechaobservacion, departamento y codigoestacion para optimizar las
+consultas. Sobre la tabla original se definió la vista
+temperatura_aire_limpia con los datos depurados. La conexión al
+proyecto en Neon se configuró con SSL (Figura 1). La carga produjo
+la tabla original con sus registros visibles en el explorador de tablas
+(Figura 2), y el total de 350.000 registros se verificó con una
+consulta en el editor SQL (Figura 3).
+
+[IMAGEN 1 — Panel de conexión a Neon]
+(archivo: screenshots/17_neon_conexion.png)
+Figura 1. Panel de conexión a la base de datos en Neon (credenciales
+enmascaradas). Fuente: elaboración propia.
+
+[IMAGEN 2 — Tabla temperatura_aire en Neon con datos]
+(archivo: screenshots/16_neon_tabla_datos.png)
+Figura 2. Tabla original temperatura_aire cargada en Neon, con
+registros visibles y tipos de datos por columna.
+Fuente: elaboración propia.
+
+[IMAGEN 3 — SQL Editor con SELECT COUNT(*) = 350.000]
+(archivo: screenshots/19_neon_sql_editor.png)
+Figura 3. Consulta SELECT COUNT(*) FROM temperatura_aire en el editor
+SQL de Neon, confirmando 350.000 registros cargados.
+Fuente: elaboración propia.
+
+Depuración
+
+La vista temperatura_aire_limpia excluye registros con valorobservado
+igual o menor a 1 °C (posibles ceros de sensor o lecturas imposibles
+para el Caribe colombiano), con valorobservado mayor a 50 °C (valores
+fuera del rango físicamente posible para la región) y registros sin
+coordenadas geográficas (latitud o longitud nulas). Estos criterios
+corresponden a pruebas de plausibilidad descritas en la literatura
+(Vergauwen et al., 2024; Spohn et al., 2026). La definición de la
+vista puede consultarse en la Figura 4. Con estos filtros se
+excluyeron 17.937 registros (5,1 % del total), dejando 332.063
+registros depurados, visibles en la Figura 5.
+
+[IMAGEN 4 — Definición SQL de la vista temperatura_aire_limpia]
+(archivo: screenshots/18_neon_vista_sql.png)
+Figura 4. Definición de la vista temperatura_aire_limpia en Neon
+con los criterios de depuración aplicados.
+Fuente: elaboración propia.
+
+[IMAGEN 5 — Vista temperatura_aire_limpia con datos en Neon]
+(archivo: screenshots/20_neon_vista_datos.png)
+Figura 5. Registros de la vista temperatura_aire_limpia en Neon
+(332.063 registros depurados).
+Fuente: elaboración propia.
+
+Análisis exploratorio con Python y Streamlit
+
+Sobre la vista depurada se desarrolló una aplicación en Python con
+la biblioteca Streamlit, ejecutada de forma local en el puerto 8501.
+El análisis incluyó: revisión de valores faltantes, estadísticas
+descriptivas por departamento, distribuciones de temperatura,
+detección de valores atípicos por el método IQR, tendencias
+temporales mensuales y por hora del día, correlaciones entre variables
+numéricas y mapa geográfico de estaciones. Las transformaciones
+aplicadas y la comparación entre los datos originales y depurados se
+documentan en la sección 2 de la aplicación (Figura 8). El código
+fuente con la estructura del proyecto se muestra en la Figura 6, y
+la ejecución desde la terminal en la Figura 7.
+
+[IMAGEN 6 — Código fuente app.py en VS Code]
+(archivo: screenshots/14_codigo_fuente.png)
+Figura 6. Código fuente de la aplicación (app.py) y estructura del
+proyecto en VS Code. Fuente: elaboración propia.
+
+[IMAGEN 7 — Terminal con Streamlit corriendo]
+(archivo: screenshots/15_terminal_corriendo.png)
+Figura 7. Aplicación Streamlit en ejecución desde la terminal
+PowerShell con el entorno virtual activo.
+Fuente: elaboración propia.
+
+[IMAGEN 8 — Sección 2: Datos y Transformaciones]
+(archivo: screenshots/02_transformaciones.png)
+Figura 8. Sección «Datos y Transformaciones»: comparación entre
+datos originales y depurados, y tabla de transformaciones aplicadas.
+Fuente: elaboración propia.
+
+[IMAGEN 9 — Sección 1: Resumen General]
+(archivo: screenshots/01_resumen_general.png)
+Figura 9. Indicadores generales del período 2005-2019 en la
+aplicación Streamlit. Fuente: elaboración propia.
+
+[IMAGEN 10 — Sección 3: Calidad de Datos]
+(archivo: screenshots/03_calidad_datos.png)
+Figura 10. Calidad de datos: valores nulos por columna y estadísticas
+descriptivas por departamento. Fuente: elaboración propia.
+
+Visualización en Power BI
+
+Se conectó un tablero de Power BI directamente a la vista
+temperatura_aire_limpia en Neon mediante el conector PostgreSQL.
+El modelo de datos con la tabla y la medida Total Registros se
+muestra en la Figura 11, y los registros cargados desde Neon en
+la Figura 12.
+
+[IMAGEN 11 — Modelo de datos Power BI]
+(archivo: screenshots/12_powerbi_modelo.png)
+Figura 11. Modelo de datos en Power BI (tabla temperatura_aire_limpia
+y medida Total Registros). Fuente: elaboración propia.
+
+[IMAGEN 12 — Tabla de datos en Power BI]
+(archivo: screenshots/11_powerbi_tabla_datos.png)
+Figura 12. Registros cargados en Power BI desde la vista en Neon.
+Fuente: elaboración propia.
+
+
+================================================================
+SECCIÓN: ANÁLISIS DE RESULTADOS — PARTES FALTANTES
+================================================================
+
+La muestra depurada comprende 332.063 registros de 69 estaciones,
+con una temperatura media general de 26,6 °C para todo el período.
+La aplicación de Streamlit muestra 330.640 registros y 59 estaciones
+al trabajar exclusivamente con el período 2005-2019 y excluir los
+1.423 registros posteriores a ese año (Figura 13).
+
+[IMAGEN 13 — Resumen General de la app]
+(archivo: screenshots/01_resumen_general.png)
+Figura 13. Resumen general de la aplicación (indicadores principales,
+período 2005-2019). Fuente: elaboración propia.
+
+Tabla 1. Temperatura media por departamento (°C), 2005-2019.
+
+Departamento     | Media (°C) | Registros | Estaciones
+-----------------|------------|-----------|----------
+Cesar            |   24,00    |   49.553  |    13
+Magdalena        |   25,50    |   49.535  |    13
+Sucre            |   25,82    |   48.221  |     5
+La Guajira       |   27,76    |   49.568  |    13
+Atlántico        |   27,86    |   49.207  |     4
+Córdoba          |   27,87    |   34.781  |    12
+Bolívar          |   27,94    |   49.775  |     9
+
+Fuente: elaboración propia con datos del IDEAM (2005-2019).
+
+Las cuatro medias más altas (La Guajira, Atlántico, Córdoba y Bolívar)
+difieren entre sí en apenas 0,19 °C, por lo que no es correcto afirmar
+que un único departamento sea «el más cálido». La separación real
+se da entre ese grupo y Cesar, Magdalena y Sucre, que registran medias
+entre 1,9 y 3,9 °C por debajo. Esto se aprecia visualmente en las
+distribuciones y el análisis departamental (Figuras 14 y 15).
+
+[IMAGEN 14 — Distribución de temperaturas]
+(archivo: screenshots/04_distribucion_temperaturas.png)
+Figura 14. Distribución de la temperatura por departamento:
+histograma superpuesto y diagrama de caja.
+Fuente: elaboración propia.
+
+[IMAGEN 15 — Análisis departamental]
+(archivo: screenshots/10_analisis_departamental.png)
+Figura 15. Análisis departamental: temperatura media, participación
+de registros y resumen estadístico por departamento.
+Fuente: elaboración propia.
+
+[IMAGEN 16 — Análisis municipal]
+(archivo: screenshots/11_analisis_municipal.png)
+Figura 16. Análisis municipal: ranking de municipios por temperatura
+media y cantidad de registros.
+Fuente: elaboración propia.
+
+Variación según la época del año
+
+Tabla 2. Mes más cálido y más fresco por departamento (medias
+mensuales, °C), período 2005-2019.
+
+Departamento  | Mes más cálido        | Mes más fresco        | Diferencia
+--------------|-----------------------|-----------------------|-----------
+Atlántico     | Agosto (28,51 °C)     | Enero (27,06 °C)      |  1,45 °C
+Bolívar       | Julio (28,58 °C)      | Noviembre (27,34 °C)  |  1,24 °C
+Cesar         | Febrero (25,23 °C)    | Septiembre (23,09 °C) |  2,14 °C
+Córdoba       | Abril (28,39 °C)      | Noviembre (27,26 °C)  |  1,13 °C
+La Guajira    | Agosto (29,54 °C)     | Enero (26,21 °C)      |  3,33 °C
+Magdalena     | Febrero (26,00 °C)    | Octubre (24,68 °C)    |  1,32 °C
+Sucre         | Enero (26,21 °C)      | Noviembre (25,39 °C)  |  0,82 °C
+
+Fuente: elaboración propia con datos del IDEAM (2005-2019).
+
+La estacionalidad fue marcada únicamente en La Guajira (3,33 °C de
+diferencia entre enero y agosto), con temperaturas más elevadas en
+el período junio-septiembre. En Cesar y Atlántico la variación fue
+moderada (2,14 y 1,45 °C respectivamente). En los demás departamentos
+la variación mensual fue débil, inferior a 1,3 °C. La diferencia
+entre las medias departamentales (desviación estándar de 1,57 °C)
+supera con claridad a la diferencia entre las medias mensuales de
+toda la región (0,27 °C), lo que indica que la ubicación geográfica
+explica más la temperatura que la época del año.
+
+El ciclo diario fue el factor de mayor variación: la temperatura media
+rondó los 23,4 °C hacia las 5-6 h y alcanzó aproximadamente 30,8 °C
+hacia las 13 h, con una amplitud de cerca de 7,4 °C (Figuras 17 y 18).
+
+[IMAGEN 17 — Tendencia temporal]
+(archivo: screenshots/06_tendencia_temporal.png)
+Figura 17. Evolución mensual de la temperatura media (2005-2019)
+y patrón promedio por hora del día.
+Fuente: elaboración propia.
+
+[IMAGEN 18 — Gráficos de dispersión]
+(archivo: screenshots/09_graficos_dispersion.png)
+Figura 18. Dispersión de la temperatura frente a la hora del día
+y la latitud (muestra de 5.000 registros).
+Fuente: elaboración propia.
+
+[IMAGEN 19 — Mapa de calor de correlaciones]
+(archivo: screenshots/07_mapa_calor_correlaciones.png)
+Figura 19. Mapa de calor de correlaciones entre temperatura,
+latitud, longitud, año, mes y hora.
+Fuente: elaboración propia.
+
+[IMAGEN 20 — Mapa de estaciones]
+(archivo: screenshots/08_mapa_estaciones.png)
+Figura 20. Mapa de las estaciones meteorológicas, coloreadas
+por temperatura media registrada.
+Fuente: elaboración propia.
+
+Año más cálido
+
+El año con mayor temperatura media en un único departamento fue 2013
+en La Guajira (30,44 °C, con 3.553 registros). Sin embargo, este dato
+debe interpretarse con cautela: ese año solo reportaron 4 de las 13
+estaciones de La Guajira, por lo que el valor puede reflejar qué
+estaciones estuvieron activas y no únicamente el comportamiento
+climático del año. En Bolívar, el año más cálido dentro del período
+fue 2015 (28,64 °C, con 5.923 registros).
+
+Valores atípicos
+
+Con el método IQR se establecieron los límites en 16,70 °C (inferior)
+y 37,50 °C (superior). Se identificaron 16.175 registros atípicos,
+equivalentes al 4,89 % del conjunto depurado (Figura 21). Cesar
+concentra la mayor proporción (13,4 % de sus registros) y Sucre la
+segunda (9,8 %), seguidos por La Guajira (4,9 %); los demás
+departamentos están por debajo del 2,2 %. La mayoría de los atípicos
+corresponde a valores bajos (por debajo de 16,70 °C), lo que apunta
+a posibles fallas técnicas de sensor y no a episodios de calor extremo.
+
+[IMAGEN 21 — Valores atípicos]
+(archivo: screenshots/05_valores_atipicos.png)
+Figura 21. Valores atípicos identificados por el método IQR,
+distribuidos por departamento.
+Fuente: elaboración propia.
+
+Comparación con antecedentes
+
+Pérez-Anaya et al. (2024) identificaron mayo y junio como los meses
+más cálidos en Santa Marta. En la muestra analizada, Magdalena como
+departamento presenta su mes más cálido en febrero (26,00 °C). Esta
+diferencia puede explicarse porque Santa Marta es un punto específico
+dentro del departamento y el período analizado difiere (2015-2023
+frente a 2005-2019 en este trabajo). La comparación debe hacerse con
+precaución por tratarse de niveles geográficos distintos.
+
+Tablero de Power BI
+
+[IMAGEN 22 — Dashboard de Power BI]
+(archivo: screenshots/10_powerbi_dashboard.png)
+Figura 22. Tablero de Power BI: indicadores, temperatura media por
+departamento, evolución anual, patrón horario y temperatura por mes.
+Fuente: elaboración propia.
+
+[IMAGEN 23 — Muestra de datos]
+(archivo: screenshots/12_muestra_datos.png)
+Figura 23. Muestra de los primeros 500 registros filtrados en la
+aplicación Streamlit. Fuente: elaboración propia.
+
+[IMAGEN 24 — Conclusiones resumen dinámico]
+(archivo: screenshots/13_conclusiones.png)
+Figura 24. Resumen dinámico generado por la aplicación Streamlit.
+Fuente: elaboración propia.
+
+[IMAGEN 25 — Conclusiones metodológicas]
+(archivo: screenshots/13_conclusiones_2.png)
+Figura 25. Conclusiones metodológicas de la aplicación Streamlit.
+Fuente: elaboración propia.
+
+
+================================================================
+SECCIÓN: CONCLUSIONES — PARTES FALTANTES
+================================================================
+
+1. Almacenamiento (Objetivo 1).
+Los datos del IDEAM se almacenaron exitosamente en PostgreSQL mediante
+la plataforma Neon. Se conservó la tabla original temperatura_aire con
+los 350.000 registros sin modificación alguna, y se creó la vista
+temperatura_aire_limpia con los datos depurados, sobre la cual se
+conectó Power BI para la visualización.
+
+2. Calidad de datos (Objetivo 2).
+Se identificaron 17.937 registros con valores iguales o menores a
+1 °C, mayores a 50 °C o sin coordenadas geográficas (5,1 % del total),
+que corresponden a posibles errores de sensor. Adicionalmente, el
+método IQR detectó 16.175 valores atípicos (4,89 %), concentrados
+principalmente en Cesar y Sucre. Todos los registros problemáticos
+se conservaron en la tabla original y se excluyeron únicamente a
+través de la vista de depuración.
+
+3. Tablero Power BI — qué muestra sobre departamentos y épocas
+(Objetivo 3).
+El tablero de Power BI conectado a la vista limpia en Neon permite
+identificar con claridad dos grupos de departamentos: Cesar, Magdalena
+y Sucre, con medias de 24,0 a 25,8 °C, y Atlántico, Bolívar, Córdoba
+y La Guajira, con medias de 27,8 a 27,9 °C. En cuanto a la variación
+estacional, el tablero muestra que las diferencias entre épocas del
+año son pequeñas en la mayoría de los departamentos, siendo La Guajira
+la excepción con una variación de aproximadamente 3,3 °C entre enero
+y agosto. El ciclo diario resultó ser el factor de mayor variación,
+con una amplitud de aproximadamente 7,4 °C entre las horas de mínima
+(5-6 h) y máxima temperatura (13 h).
+
+4. Respuesta a la pregunta de investigación y recomendaciones
+(Objetivo 4).
+En la muestra analizada, las diferencias de temperatura entre
+departamentos son mayores que las diferencias entre épocas del año,
+y la hora del día explica más variación que el mes. Se recomienda
+interpretar estos resultados con cautela, dado que la muestra por
+departamento no es aleatoria (se tomó en el orden devuelto por la
+API), la cobertura varía por año y por estación, y no se incluyó
+la altitud como variable de control.
+
+5. Trabajo futuro.
+Se recomienda ampliar el análisis con el conjunto completo de datos
+del IDEAM, definir un criterio uniforme para las distintas etiquetas
+del campo descripcionsensor, e incorporar los registros posteriores
+a 2019, que actualmente son escasos en la muestra utilizada.
+
+
+================================================================
+PENDIENTES QUE DEBES COMPLETAR TÚ ANTES DE ENTREGAR
+================================================================
+
+1. Fecha de consulta del dataset del IDEAM (aparece en Metodología
+   y en la referencia bibliográfica del IDEAM).
+
+2. Correos y filiación completa de los autores en el encabezado.
+
+3. Volumen, número y DOI de: Díaz-Pérez y Quintero (2024) y
+   Organización Meteorológica Mundial (2024).
+
+4. Confirmar el total exacto de atípicos con tu Streamlit:
+   el artículo menciona 16.235 (4,89 %) y la guía dice 16.048 (4,83 %).
+   El valor que arroja la BD directamente es 16.175. Usa ese.
+
+5. Criterio sobre las etiquetas del campo descripcionsensor:
+   decidirlo con tu grupo y el profesor.
+
+6. Verificar que el archivo .pbix funcione antes de entregar.
+
+7. Mínimo 15 referencias — el artículo actual tiene 14 completas.
+   Falta completar la de OMM (2024) con número de informe y enlace.
