@@ -9,11 +9,6 @@ load_dotenv()
 
 @st.cache_data(show_spinner="Cargando datos desde Neon...")
 def cargar_datos():
-    """
-    Carga los datos desde Neon y retorna dos DataFrames:
-    - df_orig : tabla temperatura_aire  (350,000 registros originales)
-    - df      : vista temperatura_aire_limpia (332,063 registros depurados)
-    """
     query_orig = """
         SELECT codigoestacion, fechaobservacion, valorobservado,
                nombreestacion, departamento, municipio,
@@ -49,7 +44,6 @@ def cargar_datos():
 
 
 def aplicar_filtros(df, deptos_sel, munis_sel, anio_sel):
-    """Filtra el DataFrame según las selecciones del sidebar."""
     return df[
         df["departamento"].isin(deptos_sel) &
         df["municipio"].isin(munis_sel) &
@@ -58,10 +52,6 @@ def aplicar_filtros(df, deptos_sel, munis_sel, anio_sel):
 
 
 def sidebar_filtros(df):
-    """
-    Renderiza los filtros en el sidebar y retorna el DataFrame filtrado
-    junto con las selecciones actuales.
-    """
     st.sidebar.header("Filtros")
 
     deptos     = sorted(df["departamento"].dropna().unique())
